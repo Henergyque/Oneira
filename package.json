@@ -1,0 +1,18 @@
+{
+  "name": "oneira-bot",
+  "version": "1.0.0",
+  "description": "Oneira - Discord bot for Succubus Games promotion",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "keywords": ["discord", "bot", "succubus-games"],
+  "author": "Kutushmurf",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.4.5"
+  }
+}
