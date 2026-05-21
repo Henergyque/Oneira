@@ -7,7 +7,7 @@ async function updateStatus(client) {
     console.log('[Status] data:', JSON.stringify(data));
     const total = data?.totalUniques ?? 0;
     client.user.setPresence({
-      activities: [{ name: `${total} souls`, type: 3 }],
+      activities: [{ name: `${total} souls... and counting`, type: 3 }],
       status: 'dnd',
     });
   } catch (err) {
