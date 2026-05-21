@@ -1,6 +1,8 @@
 async function updateStatus(client) {
   try {
-    const res = await fetch(`${process.env.TELEMETRY_API_URL}/v1/stats/live`);
+    const res = await fetch(`${process.env.TELEMETRY_API_URL}/v1/stats/live`, {
+      headers: { Authorization: `Bearer ${process.env.ADMIN_TOKEN}` },
+    });
     const data = await res.json();
     console.log('[Status] data:', JSON.stringify(data));
     const total = data?.totalUniques ?? 0;
