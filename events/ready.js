@@ -7,7 +7,8 @@ async function updateStatus(client) {
       activities: [{ name: `${total} souls`, type: 3 }],
       status: 'dnd',
     });
-  } catch {
+  } catch (err) {
+    console.error('[Status] fetch failed:', err.message);
     client.user.setPresence({
       activities: [{ name: 'with your desires 😈', type: 0 }],
       status: 'dnd',
