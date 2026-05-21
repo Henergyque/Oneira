@@ -2,6 +2,7 @@ async function updateStatus(client) {
   try {
     const res = await fetch(`${process.env.TELEMETRY_API_URL}/v1/stats/live`);
     const data = await res.json();
+    console.log('[Status] data:', JSON.stringify(data));
     const total = data?.totalUniques ?? 0;
     client.user.setPresence({
       activities: [{ name: `${total} souls`, type: 3 }],
