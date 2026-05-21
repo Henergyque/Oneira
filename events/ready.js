@@ -4,14 +4,12 @@ async function updateStatus(client) {
       headers: { Authorization: `Bearer ${process.env.ADMIN_TOKEN}` },
     });
     const data = await res.json();
-    console.log('[Status] data:', JSON.stringify(data));
-    const total = data?.totalUniques ?? 0;
+const total = data?.totalUniques ?? 0;
     client.user.setPresence({
       activities: [{ name: `${total} souls... and counting`, type: 3 }],
       status: 'dnd',
     });
-  } catch (err) {
-    console.error('[Status] fetch failed:', err.message);
+  } catch {
     client.user.setPresence({
       activities: [{ name: 'with your desires 😈', type: 0 }],
       status: 'dnd',
