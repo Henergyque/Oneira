@@ -13,7 +13,6 @@ const ZONE_ROLES = {
   jeu2_gauche: () => process.env.ROLE_JEU2_ID,
   jeu2_droite: () => process.env.ROLE_JEU2_ID,
   jeu2_arbre:  () => process.env.ROLE_JEU2_ID,
-  endgame:     () => process.env.ROLE_ENDGAME_ID,
 };
 
 function allRoleIds() {
@@ -21,7 +20,6 @@ function allRoleIds() {
     process.env.ROLE_INTRO_ID,
     process.env.ROLE_JEU1_ID,
     process.env.ROLE_JEU2_ID,
-    process.env.ROLE_ENDGAME_ID,
   ].filter(Boolean))];
 }
 
