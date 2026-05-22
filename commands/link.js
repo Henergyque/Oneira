@@ -59,6 +59,12 @@ export default {
       players[uuid] = { discordId: interaction.user.id, lastZone: null };
       savePlayers(players);
 
+      await fetch(`${process.env.TELEMETRY_API_URL}/v1/players/link`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${process.env.ADMIN_TOKEN}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uuid, discordUsername: interaction.user.username }),
+      }).catch(() => {});
+
       await interaction.reply({
         content: '✅ Lien établi. Ton rôle sera mis à jour dans les prochaines minutes.',
         ephemeral: true,
