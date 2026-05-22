@@ -22,10 +22,10 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 export default {
   data: new SlashCommandBuilder()
     .setName('link')
-    .setDescription('Lier ton compte de jeu à Discord pour recevoir tes rôles automatiquement')
+    .setDescription('Link your game account to Discord to receive automatic roles')
     .addStringOption(option =>
       option.setName('uuid')
-        .setDescription('Ton identifiant joueur (Options → Statistiques Anonymes dans le jeu)')
+        .setDescription('Your player ID (Options → Anonymous Statistics in-game)')
         .setRequired(true)),
 
   async execute(interaction) {
@@ -33,7 +33,7 @@ export default {
 
     if (!UUID_REGEX.test(uuid)) {
       return interaction.reply({
-        content: '❌ Format invalide. Copie exactement l\'identifiant depuis Options → Statistiques Anonymes.',
+        content: '❌ Invalid format. Copy your exact player ID from Options → Anonymous Statistics in-game.',
         ephemeral: true,
       });
     }
@@ -46,7 +46,7 @@ export default {
 
       if (!zones[uuid]) {
         return interaction.reply({
-          content: '❌ Identifiant non reconnu. Lance le jeu au moins une fois avec les statistiques activées.',
+          content: '❌ Unknown player ID. Launch the game at least once with anonymous statistics enabled.',
           ephemeral: true,
         });
       }
@@ -66,12 +66,12 @@ export default {
       }).catch(() => {});
 
       await interaction.reply({
-        content: '✅ Lien établi. Ton rôle sera mis à jour dans les prochaines minutes.',
+        content: '✅ Linked! Your role will be updated within the next few minutes.',
         ephemeral: true,
       });
     } catch {
       await interaction.reply({
-        content: '❌ Erreur de connexion au serveur. Réessaie dans un moment.',
+        content: '❌ Server connection error. Please try again in a moment.',
         ephemeral: true,
       });
     }
