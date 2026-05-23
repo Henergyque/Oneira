@@ -1,21 +1,4 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const DATA_DIR  = join(__dirname, '../data');
-const DATA_PATH = join(DATA_DIR, 'players.json');
-
-function loadPlayers() {
-  if (!existsSync(DATA_PATH)) return {};
-  try { return JSON.parse(readFileSync(DATA_PATH, 'utf8')); } catch { return {}; }
-}
-
-function savePlayers(data) {
-  if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
-  writeFileSync(DATA_PATH, JSON.stringify(data, null, 2));
-}
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -33,45 +16,58 @@ export default {
 
     if (!UUID_REGEX.test(uuid)) {
       return interaction.reply({
-        content: '❌ Invalid format. Copy your exact player ID from Options → Anonymous Statistics in-game.',
+        content: '❌ Format invalide. Copie ton UUID exact depuis Options → Statistiques anonymes en jeu.',
         ephemeral: true,
       });
     }
 
     try {
-      const res = await fetch(`${process.env.TELEMETRY_API_URL}/v1/players/zones`, {
-        headers: { Authorization: `Bearer ${process.env.ADMIN_TOKEN}` },
-      });
-      const zones = await res.json();
+      const [zonesRes, linksRes] = await Promise.all([
+        fetch(`${process.env.TELEMETRY_API_URL}/v1/players/zones`, {
+          headers: { Authorization: `Bearer ${process.env.ADMIN_TOKEN}` },
+        }),
+        fetch(`${process.env.TELEMETRY_API_URL}/v1/players/links`, {
+          headers: { Authorization: `Bearer ${process.env.ADMIN_TOKEN}` },
+        }),
+      ]);
+
+      const zones = await zonesRes.json();
+      const { links } = await linksRes.json();
 
       if (!zones[uuid]) {
         return interaction.reply({
-          content: '❌ Unknown player ID. Launch the game at least once with anonymous statistics enabled.',
+          content: '❌ UUID inconnu. Lance le jeu au moins une fois avec les statistiques anonymes activées.',
           ephemeral: true,
         });
       }
 
-      const players = loadPlayers();
-
-      const alreadyLinked = Object.entries(players).find(([, v]) => v.discordId === interaction.user.id);
-      if (alreadyLinked) delete players[alreadyLinked[0]];
-
-      players[uuid] = { discordId: interaction.user.id, lastZone: null };
-      savePlayers(players);
+      const existing = (links || []).find(l => l.uuid === uuid);
+      if (existing && existing.discordId === interaction.user.id) {
+        return interaction.reply({
+          content: '✅ Cet UUID est déjà lié à ton compte Discord. Tes rôles seront mis à jour automatiquement.',
+          ephemeral: true,
+        });
+      }
+      if (existing && existing.discordId !== interaction.user.id) {
+        return interaction.reply({
+          content: '❌ Cet UUID est déjà utilisé par un autre compte Discord.',
+          ephemeral: true,
+        });
+      }
 
       await fetch(`${process.env.TELEMETRY_API_URL}/v1/players/link`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${process.env.ADMIN_TOKEN}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ uuid, discordUsername: interaction.user.username, discordId: interaction.user.id }),
-      }).catch(() => {});
+      });
 
       await interaction.reply({
-        content: '✅ Linked! Your role will be updated within the next few minutes.',
+        content: '✅ Lié ! Ton rôle sera mis à jour dans les prochaines minutes.',
         ephemeral: true,
       });
     } catch {
       await interaction.reply({
-        content: '❌ Server connection error. Please try again in a moment.',
+        content: '❌ Erreur de connexion au serveur. Réessaie dans un moment.',
         ephemeral: true,
       });
     }
