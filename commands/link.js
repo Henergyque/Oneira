@@ -62,7 +62,7 @@ export default {
       await fetch(`${process.env.TELEMETRY_API_URL}/v1/players/link`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${process.env.ADMIN_TOKEN}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uuid, discordUsername: interaction.user.username }),
+        body: JSON.stringify({ uuid, discordUsername: interaction.user.username, discordId: interaction.user.id }),
       }).catch(() => {});
 
       await interaction.reply({

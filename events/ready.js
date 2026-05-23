@@ -1,11 +1,3 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const DATA_DIR  = join(__dirname, '../data');
-const DATA_PATH = join(DATA_DIR, 'players.json');
-
 const ZONE_ROLES = {
   intro:       () => process.env.ROLE_INTRO_ID,
   jeu1:        () => process.env.ROLE_JEU1_ID,
@@ -23,15 +15,8 @@ function allRoleIds() {
   ].filter(Boolean))];
 }
 
-function loadPlayers() {
-  if (!existsSync(DATA_PATH)) return {};
-  try { return JSON.parse(readFileSync(DATA_PATH, 'utf8')); } catch { return {}; }
-}
-
-function savePlayers(data) {
-  if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
-  writeFileSync(DATA_PATH, JSON.stringify(data, null, 2));
-}
+// uuid → lastZone (in-memory, resets on restart which is fine)
+const lastZoneMap = new Map();
 
 async function updateStatus(client) {
   try {
@@ -54,39 +39,46 @@ async function updateStatus(client) {
 
 async function updateRoles(client) {
   try {
-    const res = await fetch(`${process.env.TELEMETRY_API_URL}/v1/players/zones`, {
-      headers: { Authorization: `Bearer ${process.env.ADMIN_TOKEN}` },
-    });
-    if (!res.ok) { console.error(`[roles] zones fetch failed: ${res.status}`); return; }
-    const zones = await res.json();
-    const players = loadPlayers();
-    const linked = Object.keys(players);
-    if (linked.length === 0) return;
+    const [zonesRes, linksRes] = await Promise.all([
+      fetch(`${process.env.TELEMETRY_API_URL}/v1/players/zones`, {
+        headers: { Authorization: `Bearer ${process.env.ADMIN_TOKEN}` },
+      }),
+      fetch(`${process.env.TELEMETRY_API_URL}/v1/players/links`, {
+        headers: { Authorization: `Bearer ${process.env.ADMIN_TOKEN}` },
+      }),
+    ]);
+
+    if (!zonesRes.ok) { console.error(`[roles] zones fetch failed: ${zonesRes.status}`); return; }
+    if (!linksRes.ok) { console.error(`[roles] links fetch failed: ${linksRes.status}`); return; }
+
+    const zones = await zonesRes.json();
+    const { links } = await linksRes.json();
+
+    if (!links || links.length === 0) return;
 
     const guild = await client.guilds.fetch(process.env.GUILD_ID);
     const roleIds = allRoleIds();
-    let changed = false;
 
-    for (const [uuid, data] of Object.entries(players)) {
+    for (const { uuid, discordId } of links) {
       const zone = zones[uuid];
-      if (!zone || zone === 'unknown' || zone === data.lastZone) continue;
+      if (!zone || zone === 'unknown') continue;
+
+      const lastZone = lastZoneMap.get(uuid) ?? null;
+      if (zone === lastZone) continue;
 
       const newRoleId = ZONE_ROLES[zone]?.();
       if (!newRoleId) { console.warn(`[roles] no role mapped for zone "${zone}"`); continue; }
 
       try {
-        const member = await guild.members.fetch(data.discordId);
+        const member = await guild.members.fetch(discordId);
         await member.roles.remove(roleIds.filter(id => id !== newRoleId));
         await member.roles.add(newRoleId);
-        players[uuid].lastZone = zone;
-        changed = true;
+        lastZoneMap.set(uuid, zone);
         console.log(`[roles] ${uuid.slice(0, 8)} → ${zone} (role ${newRoleId})`);
       } catch (err) {
         console.error(`[roles] failed for ${uuid.slice(0, 8)}: ${err.message}`);
       }
     }
-
-    if (changed) savePlayers(players);
   } catch (err) {
     console.error(`[roles] updateRoles error: ${err.message}`);
   }
