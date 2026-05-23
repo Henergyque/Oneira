@@ -57,18 +57,22 @@ async function updateRoles(client) {
     const res = await fetch(`${process.env.TELEMETRY_API_URL}/v1/players/zones`, {
       headers: { Authorization: `Bearer ${process.env.ADMIN_TOKEN}` },
     });
+    if (!res.ok) { console.error(`[roles] zones fetch failed: ${res.status}`); return; }
     const zones = await res.json();
     const players = loadPlayers();
+    const linked = Object.keys(players);
+    if (linked.length === 0) return;
+
     const guild = await client.guilds.fetch(process.env.GUILD_ID);
     const roleIds = allRoleIds();
     let changed = false;
 
     for (const [uuid, data] of Object.entries(players)) {
       const zone = zones[uuid];
-      if (!zone || zone === data.lastZone) continue;
+      if (!zone || zone === 'unknown' || zone === data.lastZone) continue;
 
       const newRoleId = ZONE_ROLES[zone]?.();
-      if (!newRoleId) continue;
+      if (!newRoleId) { console.warn(`[roles] no role mapped for zone "${zone}"`); continue; }
 
       try {
         const member = await guild.members.fetch(data.discordId);
@@ -76,14 +80,15 @@ async function updateRoles(client) {
         await member.roles.add(newRoleId);
         players[uuid].lastZone = zone;
         changed = true;
-      } catch {
-        // member left server or role missing — skip silently
+        console.log(`[roles] ${uuid.slice(0, 8)} → ${zone} (role ${newRoleId})`);
+      } catch (err) {
+        console.error(`[roles] failed for ${uuid.slice(0, 8)}: ${err.message}`);
       }
     }
 
     if (changed) savePlayers(players);
-  } catch {
-    // telemetry unreachable — skip
+  } catch (err) {
+    console.error(`[roles] updateRoles error: ${err.message}`);
   }
 }
 
