@@ -16,7 +16,7 @@ export default {
 
     if (!UUID_REGEX.test(uuid)) {
       return interaction.reply({
-        content: '❌ Format invalide. Copie ton UUID exact depuis Options → Statistiques anonymes en jeu.',
+        content: '❌ Invalid format. Copy your exact player ID from Options → Anonymous Statistics in-game.',
         ephemeral: true,
       });
     }
@@ -36,7 +36,7 @@ export default {
 
       if (!zones[uuid]) {
         return interaction.reply({
-          content: '❌ UUID inconnu. Lance le jeu au moins une fois avec les statistiques anonymes activées.',
+          content: '❌ Unknown player ID. Launch the game at least once with anonymous statistics enabled.',
           ephemeral: true,
         });
       }
@@ -44,13 +44,13 @@ export default {
       const existing = (links || []).find(l => l.uuid === uuid);
       if (existing && existing.discordId === interaction.user.id) {
         return interaction.reply({
-          content: '✅ Cet UUID est déjà lié à ton compte Discord. Tes rôles seront mis à jour automatiquement.',
+          content: '✅ This UUID is already linked to your Discord account. Your roles will be updated automatically.',
           ephemeral: true,
         });
       }
       if (existing && existing.discordId !== interaction.user.id) {
         return interaction.reply({
-          content: '❌ Cet UUID est déjà utilisé par un autre compte Discord.',
+          content: '❌ This UUID is already linked to another Discord account.',
           ephemeral: true,
         });
       }
@@ -62,12 +62,12 @@ export default {
       });
 
       await interaction.reply({
-        content: '✅ Lié ! Ton rôle sera mis à jour dans les prochaines minutes.',
+        content: '✅ Linked! Your role will be updated within the next few minutes.',
         ephemeral: true,
       });
     } catch {
       await interaction.reply({
-        content: '❌ Erreur de connexion au serveur. Réessaie dans un moment.',
+        content: '❌ Server connection error. Please try again in a moment.',
         ephemeral: true,
       });
     }
