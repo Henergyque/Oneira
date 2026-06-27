@@ -1,3 +1,6 @@
+import { query } from '../lib/db.js';
+import { runBackup } from '../lib/backup.js';
+
 const ZONE_ROLES = {
   intro:       () => process.env.ROLE_INTRO_ID,
   jeu1:        () => process.env.ROLE_JEU1_ID,
@@ -84,6 +87,27 @@ async function updateRoles(client) {
   }
 }
 
+async function resumeInterruptedBackup(client) {
+  const guildId = process.env.GUILD_ID;
+  if (!guildId) return;
+
+  try {
+    const res = await query(
+      `SELECT 1 FROM backup_jobs WHERE guild_id = $1 AND status = 'running' LIMIT 1`,
+      [guildId]
+    );
+    if (res.rows.length === 0) return;
+
+    const guild = await client.guilds.fetch(guildId);
+    console.log(`[backup] resuming interrupted backup for ${guild.name}...`);
+    runBackup(guild, { log: msg => console.log(`[backup:${guildId}] ${msg}`) }).catch(err => {
+      console.error('[backup] resume failed:', err);
+    });
+  } catch (err) {
+    console.error('[backup] could not check for interrupted backup:', err.message);
+  }
+}
+
 export default {
   name: 'ready',
   once: true,
@@ -92,5 +116,6 @@ export default {
     updateStatus(client);
     setInterval(() => updateStatus(client), 30 * 1000);
     setInterval(() => updateRoles(client), 3 * 60 * 1000);
+    resumeInterruptedBackup(client);
   },
 };

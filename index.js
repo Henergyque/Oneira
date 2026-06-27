@@ -3,8 +3,12 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { readdirSync } from 'fs';
 import dotenv from 'dotenv';
+import { initSchema } from './lib/db.js';
 
 dotenv.config();
+
+await initSchema();
+console.log('✅ Database schema ready');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

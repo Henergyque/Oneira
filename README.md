@@ -11,6 +11,7 @@
 - **`/devlog`** - Post devlog updates to a dedicated channel (Staff only)
 - **`/announce`** - Post announcements with @everyone ping (Staff only)
 - **`/ping`** - Check bot latency
+- **`/backup start|status|stop`** - Full server backup (messages, channels, roles, members, attachments) into Postgres, throttled to avoid rate limits and resumable if interrupted
 - **Auto-welcome** - Greet new members on join
 
 ---
